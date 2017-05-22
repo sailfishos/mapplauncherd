@@ -417,13 +417,24 @@ void Booster::setEnvironmentBeforeLaunch()
         // The application is not privileged.  Drop any user or
         // group ID inherited from the booster, and instead set
         // the user ID and group ID of the calling process.
-
         if (geteuid() != m_appData->userId()) {
             setuid(m_appData->userId());
         }
 
         if (getegid() != m_appData->groupId()) {
             setgid(m_appData->groupId());
+        }
+    } else {
+        // The application is privileged.  Ensure that the
+        // caller is also privileged, otherwise drop privileges.
+        if (geteuid() != m_appData->userId()
+                || getegid() != m_appData->groupId()) {
+            Logger::logError("Booster: launching privileged process: '%s' from non-privileged context: uid: %d, gid: %d",
+                             m_appData->fileName().c_str(), m_appData->userId(), m_appData->groupId());
+            setuid(m_appData->userId());
+            seteuid(m_appData->userId());
+            setgid(m_appData->groupId());
+            setegid(m_appData->groupId());
         }
     }
 

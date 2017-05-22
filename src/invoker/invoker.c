@@ -583,7 +583,7 @@ static int invoke_remote(int socket_fd, int prog_argc, char **prog_argv, char *p
     invoker_send_args(socket_fd, prog_argc, prog_argv);
     invoker_send_prio(socket_fd, prog_prio);
     invoker_send_delay(socket_fd, respawn_delay);
-    invoker_send_ids(socket_fd, getuid(), getgid());
+    invoker_send_ids(socket_fd, geteuid(), getegid());
     invoker_send_io(socket_fd);
     invoker_send_env(socket_fd);
     invoker_send_end(socket_fd);
