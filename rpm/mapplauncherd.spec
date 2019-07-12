@@ -68,9 +68,9 @@ ln -s ../booster-generic.service %{buildroot}/usr/lib/systemd/user/user-session.
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 
-install -D -m 0755 %{SOURCE1} %{buildroot}/lib/systemd/system/booster-cgroup-mount.service
-mkdir -p %{buildroot}/lib/systemd/system/multi-user.target.wants
-ln -s ../booster-cgroup-mount.service %{buildroot}/lib/systemd/system/multi-user.target.wants/
+install -D -m 0755 %{SOURCE1} %{buildroot}/usr/lib/systemd/system/booster-cgroup-mount.service
+mkdir -p %{buildroot}/usr/lib/systemd/system/multi-user.target.wants
+ln -s ../booster-cgroup-mount.service %{buildroot}/usr/lib/systemd/system/multi-user.target.wants/
 
 install -D -m 0755 scripts/booster-cgroup-mount %{buildroot}/usr/lib/startup/booster-cgroup-mount
 
@@ -97,7 +97,7 @@ groupadd -rf privileged
 %{_includedir}/applauncherd/*
 
 %files cgroup
-/lib/systemd/system/booster-cgroup-mount.service
-/lib/systemd/system/multi-user.target.wants/booster-cgroup-mount.service
+%{_libdir}/systemd/system/booster-cgroup-mount.service
+%{_libdir}/systemd/system/multi-user.target.wants/booster-cgroup-mount.service
 %dir %{_libdir}/startup
 %{_libdir}/startup/booster-cgroup-mount
