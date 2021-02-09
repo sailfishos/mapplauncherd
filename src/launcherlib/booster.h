@@ -195,7 +195,7 @@ private:
     void* loadMain();
 
     //! Helper method: returns application name for to use for locking etc.
-    std::string getFinalFileName();
+    std::string getFinalName(const std::string &name);
 
     //! Socket connection to invoker
     Connection* m_connection;

@@ -107,7 +107,7 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
             SingleInstancePluginEntry * pluginEntry = singleInstance->pluginEntry();
             if (pluginEntry)
             {
-                std::string lockedAppName = getFinalFileName();
+                std::string lockedAppName = getFinalName(m_appData->appName());
                 if (!pluginEntry->lockFunc(lockedAppName.c_str()))
                 {
                     // Try to activate the window of the existing instance
@@ -433,7 +433,7 @@ void Booster::setEnvironmentBeforeLaunch()
     if (!errno && cur_prio < m_appData->priority())
         setpriority(PRIO_PROCESS, 0, m_appData->priority());
 
-    std::string fileName = getFinalFileName();
+    std::string fileName = getFinalName(m_appData->fileName());
     setCgroup(fileName);
 
     if (!m_appData->isPrivileged()) {
@@ -616,9 +616,8 @@ void Booster::resetOomAdj()
     }
 }
 
-std::string Booster::getFinalFileName()
+std::string Booster::getFinalName(const std::string &name)
 {
-    std::string name = m_appData->fileName();
     if (name == "/usr/bin/sailjail") {
         // This doesn't implement sailjail's parsing logic but instead
         // has some assumptions about the arguments:
@@ -638,12 +637,10 @@ std::string Booster::getFinalFileName()
         for (int i = 1; i < m_appData->argc(); i++, ptr++) {
             if (strcmp(*ptr, "--") == 0) {
                 if (i+1 < m_appData->argc()) {
-                    name = *(++ptr);
-                    break;
+                    return std::string(*(++ptr));
                 }
             } else if (strncmp(*ptr, "/usr/bin/", 9) == 0) {
-                name = *ptr;
-                break;
+                return std::string(*ptr);
             }
         }
     }
