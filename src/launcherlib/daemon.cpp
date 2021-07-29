@@ -125,6 +125,10 @@ static void write_to_signal_pipe(int sig)
     }
 }
 
+static void ignore_signal(int)
+{
+}
+
 static int read_from_signal_pipe(int fd)
 {
     char sig = 0;
@@ -740,8 +744,15 @@ void Daemon::forkBooster(int sleepTime)
         // No need for capabilities anymore
         dropCapabilities();
 
+        // Signals meant for the control process as identified by name may be received by the
+        // boosters as well. Ignore those so they don't accidentally kill boosted applications.
+        setUnixSignalHandler(SIGUSR1, ignore_signal);
+        setUnixSignalHandler(SIGUSR2, ignore_signal);
+
         // Run the current Booster
         int retval = m_booster->run(m_socketManager);
+
+        restoreUnixSignalHandlers();
 
         // Finish
         delete m_booster;
