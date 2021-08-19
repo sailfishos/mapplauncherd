@@ -49,6 +49,9 @@
 #include "invokelib.h"
 #include "search.h"
 
+#define BOOSTER_SESSION "silica-session"
+#define BOOSTER_GENERIC "generic"
+
 /* Setting VERBOSE_SIGNALS to non-zero value logs receiving of
  * async-signals - which is useful only when actively debugging
  * booster / invoker interoperation.
@@ -853,7 +856,7 @@ static int invoke(InvokeArgs *args)
 
     bool tried_session = false;
     for (size_t i = 0; !tried_session && types[i]; ++i) {
-        if (strcmp(types[i], "session"))
+        if (strcmp(types[i], BOOSTER_SESSION))
             continue;
         tried_session = true;
         fd = invoker_init(types[i], NULL);
@@ -866,12 +869,12 @@ static int invoke(InvokeArgs *args)
     if (fd == -1 && !tried_session) {
         bool tried_generic = false;
         for (size_t i = 0; fd == -1 && types[i]; ++i) {
-            if (!strcmp(types[i], "generic"))
+            if (!strcmp(types[i], BOOSTER_GENERIC))
                 tried_generic = true;
             fd = invoker_init(types[i], args->app_name);
         }
         if (fd == -1 && !tried_generic)
-            fd = invoker_init("generic", args->app_name);
+            fd = invoker_init(BOOSTER_GENERIC, args->app_name);
     }
 
     if (fd != -1) {
