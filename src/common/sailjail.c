@@ -27,6 +27,7 @@
 #define SAILJAIL_KEY_APPLICATION_NAME "ApplicationName"
 #define SAILJAIL_KEY_PERMISSIONS "Permissions"
 #define SAILJAIL_KEY_MODE "Mode"
+#define SAILJAIL_KEY_EXEC_DBUS "ExecDBus"
 #define NEMO_KEY_APPLICATION_TYPE "X-Nemo-Application-Type"
 #define NEMO_KEY_SINGLE_INSTANCE "X-Nemo-Single-Instance"
 #define MAEMO_KEY_FIXED_ARGS "X-Maemo-Fixed-Args"
@@ -379,7 +380,7 @@ sailjailclient_match_argv(const char **tpl_argv, const char **app_argv)
             /* Template args exhausted */
             if (*app_argv) {
                 /* Excess application args */
-                error("argv has unwanted '%s'", *app_argv);
+                info("argv has unwanted '%s'", *app_argv);
                 goto EXIT;
             }
             break;
@@ -391,7 +392,7 @@ sailjailclient_match_argv(const char **tpl_argv, const char **app_argv)
             /* Exact match needed */
             if (g_strcmp0(*app_argv, want)) {
                 /* Application args has something else */
-                error("argv is missing '%s'", want);
+                info("argv is missing '%s'", want);
                 goto EXIT;
             }
             ++app_argv;
@@ -443,14 +444,14 @@ sailjailclient_match_argv(const char **tpl_argv, const char **app_argv)
         if (code_args < 0) {
             /* Variable number of args */
             if (sailjailclient_get_field_code(*tpl_argv)) {
-                error("Can't validate '%s %s' combination", want, *tpl_argv);
+                info("Can't validate '%s %s' combination", want, *tpl_argv);
                 goto EXIT;
             }
             for (; code_args < 0; ++code_args) {
                 if (!*app_argv || !g_strcmp0(*app_argv, *tpl_argv))
                     break;
                 if (sailjailclient_is_option(*app_argv)) {
-                    error("option '%s' at field code '%s'", *app_argv, want);
+                    info("option '%s' at field code '%s'", *app_argv, want);
                     goto EXIT;
                 }
                 ++app_argv;
@@ -459,11 +460,11 @@ sailjailclient_match_argv(const char **tpl_argv, const char **app_argv)
             /* Specified number of args */
             for (; code_args > 0; --code_args) {
                 if (!*app_argv) {
-                    error("missing args for field code '%s'", want);
+                    info("missing args for field code '%s'", want);
                     goto EXIT;
                 }
                 if (sailjailclient_is_option(*app_argv)) {
-                    error("option '%s' at field code '%s'", *app_argv, want);
+                    info("option '%s' at field code '%s'", *app_argv, want);
                     goto EXIT;
                 }
                 ++app_argv;
@@ -483,6 +484,11 @@ sailjailclient_validate_argv(const char *exec, const gchar **app_argv)
     bool validated = false;
     GError *err = NULL;
     gchar **exec_argv = NULL;
+
+    if( !exec ) {
+        /* No exec line provided -> invalid */
+        goto EXIT;
+    }
 
     if (!app_argv || !*app_argv) {
         error("application argv not defined");
@@ -528,11 +534,7 @@ sailjailclient_validate_argv(const char *exec, const gchar **app_argv)
 
     /* Argument zero has been checked already */
     if (!sailjailclient_match_argv(tpl_argv + 1, app_argv + 1)) {
-        gchar *args = g_strjoinv(" ", (gchar **)app_argv);
-        error("Application args do not match Exec line template");
-        error("exec: %s", exec);
-        error("args: %s", args);
-        g_free(args);
+        /* Leave error reporting to caller */
         goto EXIT;
     }
 
@@ -554,6 +556,7 @@ sailjail_verify_launch(const char *desktop, const char **argv)
     GHashTable *info = NULL;
     const char **requested = NULL;
     const char *exec = NULL;
+    const char *exec_dbus = NULL;
 
     if (!(con = sailjail_connect_bus()))
         goto EXIT;
@@ -566,8 +569,19 @@ sailjail_verify_launch(const char *desktop, const char **argv)
         goto EXIT;
     }
 
-    if (!sailjailclient_validate_argv(exec, argv))
+    exec_dbus = appinfo_string(info, SAILJAIL_KEY_EXEC_DBUS);
+
+    if (!sailjailclient_validate_argv(exec, argv) &&
+        !sailjailclient_validate_argv(exec_dbus, argv)) {
+        gchar *args = g_strjoinv(" ", (gchar **)argv);
+        error("Application args do not match Exec line template%s", exec_dbus ? "s" : "");
+        error("exec: %s", exec);
+        if( exec_dbus )
+            error("exec dbus: %s", exec_dbus);
+        error("args: %s", args);
+        g_free(args);
         goto EXIT;
+    }
 
     if (!(requested = appinfo_strv(info, SAILJAIL_KEY_PERMISSIONS))) {
         error("no permissions defined for application '%s'", desktop);
