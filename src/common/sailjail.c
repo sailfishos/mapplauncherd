@@ -88,7 +88,7 @@ sailjail_connect_bus(void)
         error("system bus connect failed: %s: %s",
               err.name, err.message);
     } else {
-        warning("PRIVATE CONNECTION %p CONNECTED", con);
+        debug("PRIVATE CONNECTION %p CONNECTED", con);
         dbus_connection_set_exit_on_disconnect(con, false);
     }
 
@@ -100,7 +100,7 @@ static void
 sailjail_disconnect_bus(DBusConnection *con)
 {
     if (con) {
-        warning("PRIVATE CONNECTION %p DISCONNECTED", con);
+        debug("PRIVATE CONNECTION %p DISCONNECTED", con);
         dbus_connection_close(con);
         dbus_connection_unref(con);
     }
