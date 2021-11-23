@@ -80,6 +80,7 @@ install -D -m 0755 scripts/booster-cgroup-mount %{buildroot}/usr/lib/startup/boo
 
 %files
 %defattr(-,root,root,-)
+%license COPYING.LESSER
 %dir %{_datadir}/mapplauncherd
 %dir %{_datadir}/mapplauncherd/privileges.d
 %{_bindir}/invoker
