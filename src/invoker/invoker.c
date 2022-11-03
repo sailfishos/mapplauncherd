@@ -825,6 +825,8 @@ static int invoke_remote(int socket_fd, const InvokeArgs *args)
     if (args->wait_term) {
         exit_status = wait_for_launched_process_to_exit(socket_fd),
             socket_fd = -1;
+    } else {
+        exit_status = EXIT_SUCCESS;
     }
 
     if (socket_fd != -1)
