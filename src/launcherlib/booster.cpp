@@ -90,8 +90,8 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
 
     setBoosterLauncherSocket(newBoosterLauncherSocket);
 
-    // Drop priority (nice = 10)
-    pushPriority(10);
+    // Set nice value (priority) to default for all apps
+    pushPriority(0);
 
     // Preload stuff
     if (!m_bootMode)
