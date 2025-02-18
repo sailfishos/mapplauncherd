@@ -635,7 +635,7 @@ static unsigned int get_delay(char *delay_arg, char *param_name,
         delay = strtoul(delay_arg, NULL, 10);
 
         // Check for various possible errors
-        if ((errno == ERANGE && delay == ULONG_MAX)
+        if (errno == ERANGE
             || delay < min_value
             || delay > max_value)
         {
