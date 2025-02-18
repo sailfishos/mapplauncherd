@@ -9,12 +9,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 # Set sources
 set(SRC booster-generic.cpp)
 
-# Set libraries to be linked.
-link_libraries("-L../launcherlib -lapplauncherd" ${LIBDL})
-
 # Set executable
 add_executable(booster-generic ${SRC} ${MOC_SRC})
-add_dependencies(booster-generic applauncherd)
+
+target_link_libraries(booster-generic applauncherd)
 
 # Add install rule
 install(TARGETS booster-generic DESTINATION ${CMAKE_INSTALL_FULL_LIBEXECDIR}/mapplauncherd/)
