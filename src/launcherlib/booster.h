@@ -165,7 +165,7 @@ protected:
      *  initializations can be done here.
      *  Re-implement if needed.
      */
-    virtual void preinit() {};
+    virtual void preinit() {}
 
     //! Sets the socket fd used in the communication between
     //! the booster and launcher.
