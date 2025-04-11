@@ -99,7 +99,7 @@ public:
     //! Set booster respawn delay
     void setDelay(int delay);
 
-    //!Return respawn delay
+    //! Return respawn delay
     int delay() const;
 
     //! Set entry point for the application

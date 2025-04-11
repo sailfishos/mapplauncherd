@@ -65,8 +65,6 @@ static std::string basename(const std::string &str)
 Booster::Booster() :
     m_appData(new AppData),
     m_connection(NULL),
-    m_oldPriority(0),
-    m_oldPriorityOk(false),
     m_spaceAvailable(0),
     m_boostedApplication("default"),
     m_bootMode(false)
@@ -90,9 +88,6 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
 
     setBoosterLauncherSocket(newBoosterLauncherSocket);
 
-    // Drop priority (nice = 10)
-    pushPriority(10);
-
     // Preload stuff
     if (!m_bootMode)
         preload();
@@ -103,9 +98,6 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
     temporaryProcessName += "]";
     const char * tempArgv[] = {temporaryProcessName.c_str()};
     renameProcess(initialArgc, initialArgv, 1, tempArgv);
-
-    // Restore priority
-    popPriority();
 
     while (true)
     {
@@ -572,34 +564,6 @@ void* Booster::loadMain()
                                  error_s + "'\n");
 
     return module;
-}
-
-bool Booster::pushPriority(int nice)
-{
-    errno = 0;
-    m_oldPriorityOk = true;
-    m_oldPriority   = getpriority(PRIO_PROCESS, getpid());
-
-    if (errno)
-    {
-        m_oldPriorityOk = false;
-    }
-    else
-    {
-        return setpriority(PRIO_PROCESS, getpid(), nice) != -1;
-    }
-
-    return false;
-}
-
-bool Booster::popPriority()
-{
-    if (m_oldPriorityOk)
-    {
-        return setpriority(PRIO_PROCESS, getpid(), m_oldPriority) != -1;
-    }
-
-    return false;
 }
 
 const string &Booster::boostedApplication() const

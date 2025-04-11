@@ -18,8 +18,6 @@ BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(libcap)
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  cmake
-Provides:   meegotouch-applauncherd > 3.0.3
-Obsoletes:   meegotouch-applauncherd <= 3.0.3
 
 %description
 Application invoker and launcher daemon that speed up
@@ -30,8 +28,6 @@ functionality to launch applications as single instances.
 %package devel
 Summary:    Development files for launchable applications
 Requires:   %{name} = %{version}-%{release}
-Provides:   meegotouch-applauncherd-devel > 3.0.3
-Obsoletes:  meegotouch-applauncherd-devel <= 3.0.3
 
 %description devel
 Development files for creating applications that can be launched
@@ -79,7 +75,6 @@ install -D -m 0755 scripts/booster-cgroup-mount %{buildroot}/usr/lib/startup/boo
 %postun -p /sbin/ldconfig
 
 %files
-%defattr(-,root,root,-)
 %license COPYING.LESSER
 %dir %{_datadir}/mapplauncherd
 %dir %{_datadir}/mapplauncherd/privileges.d
@@ -92,7 +87,6 @@ install -D -m 0755 scripts/booster-cgroup-mount %{buildroot}/usr/lib/startup/boo
 %{_userunitdir}/user-session.target.wants/booster-generic.service
 
 %files devel
-%defattr(-,root,root,-)
 %{_includedir}/applauncherd/*
 %{_libdir}/libapplauncherd.so
 %{_libdir}/pkgconfig/*.pc

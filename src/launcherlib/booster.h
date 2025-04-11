@@ -165,13 +165,7 @@ protected:
      *  initializations can be done here.
      *  Re-implement if needed.
      */
-    virtual void preinit() {};
-
-    //! Set nice value and store the old priority. Return true on success.
-    bool pushPriority(int nice);
-
-    //! Restore the old priority stored by the previous successful setPriority().
-    bool popPriority();
+    virtual void preinit() {}
 
     //! Sets the socket fd used in the communication between
     //! the booster and launcher.
@@ -206,13 +200,6 @@ private:
 
     //! Socket connection to invoker
     Connection* m_connection;
-
-    //! Process priority before pushPriority() is called
-    int m_oldPriority;
-
-    //! True if m_oldPriority is a valid value so that
-    //! it can be restored later.
-    bool m_oldPriorityOk;
 
     //! Socket used to tell the parent that a new booster is needed
     int m_boosterLauncherSocket;
