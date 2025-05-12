@@ -1,6 +1,6 @@
 Name:       mapplauncherd
 Summary:    Application launcher for fast startup
-Version:    4.2.3
+Version:    4.2.16
 Release:    1
 License:    LGPLv2+
 URL:        https://github.com/sailfishos/mapplauncherd
@@ -51,10 +51,10 @@ unset LD_AS_NEEDED
 
 rm -f CMakeCache.txt
 %cmake
-%make_build
+%cmake_build
 
 %install
-%make_install
+%cmake_install
 
 # Don't use %exclude, remove at install phase
 rm -f %{buildroot}/usr/share/fala_images/fala_qml_helloworld
