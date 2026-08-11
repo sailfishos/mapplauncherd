@@ -58,10 +58,8 @@ Connection::~Connection()
 {
     close();
 
-    for (int i = 0; i < IO_DESCRIPTOR_COUNT; i++)
-    {
-        if (m_io[i] != -1)
-        {
+    for (int i = 0; i < IO_DESCRIPTOR_COUNT; i++) {
+        if (m_io[i] != -1) {
             ::close(m_io[i]);
             m_io[i] = -1;
         }
@@ -83,12 +81,10 @@ int Connection::getFd() const
 bool Connection::accept(AppData *appData)
 {
     (void)appData; // unused
-    if (!m_testMode)
-    {
+    if (!m_testMode) {
         m_fd = ::accept(m_curSocket, NULL, NULL);
 
-        if (m_fd < 0)
-        {
+        if (m_fd < 0) {
             Logger::logError("Connection: Failed to accept a connection: %s\n", strerror(errno));
             return false;
         }
@@ -104,10 +100,8 @@ bool Connection::connected() const
 
 void Connection::close()
 {
-    if (m_fd != -1)
-    {
-        if (!m_testMode)
-        {
+    if (m_fd != -1) {
+        if (!m_testMode) {
             ::close(m_fd);
         }
 
@@ -117,70 +111,57 @@ void Connection::close()
 
 bool Connection::sendMsg(uint32_t msg)
 {
-    if (!m_testMode)
-    {
+    if (!m_testMode) {
         Logger::logDebug("Connection: %s: %08x", __FUNCTION__, msg);
         return write(m_fd, &msg, sizeof(msg)) != -1;
     }
-    else
-    {
-        return true;
-    }
+
+    return true;
 }
 
 bool Connection::recvMsg(uint32_t *msg)
 {
-    if (!m_testMode)
-    {
+    if (!m_testMode) {
         uint32_t buf = 0;
         int len = sizeof(buf);
         ssize_t ret = read(m_fd, &buf, len);
 
-        if (ret < len)
-        {
+        if (ret < len) {
             Logger::logError("Connection: can't read data from connecton in %s", __FUNCTION__);
             *msg = 0;
-        }
-        else
-        {
+        } else {
             Logger::logDebug("Connection: %s: %08x", __FUNCTION__, *msg);
             *msg = buf;
         }
 
         return ret != -1;
     }
-    else
-    {
-        return true;
-    }
+
+    return true;
 }
 
 char *Connection::recvStr()
 {
-    if (!m_testMode)
-    {
+    if (!m_testMode) {
         // Get the size.
         uint32_t size = 0;
 
         const uint32_t STR_LEN_MAX = 4096;
         bool res = recvMsg(&size);
-        if (!res || size == 0 || size > STR_LEN_MAX)
-        {
+        if (!res || size == 0 || size > STR_LEN_MAX) {
             Logger::logError("Connection: string receiving failed in %s, string length is %d", __FUNCTION__, size);
             return NULL;
         }
 
         char * str = new char[size];
-        if (!str)
-        {
+        if (!str) {
             Logger::logError("Connection: mallocing in %s", __FUNCTION__);
             return NULL;
         }
 
         // Get the string.
         uint32_t ret = read(m_fd, str, size);
-        if (ret < size)
-        {
+        if (ret < size) {
             Logger::logError("Connection: getting string, got %u of %u bytes", ret, size);
             delete [] str;
             return NULL;
@@ -191,10 +172,8 @@ char *Connection::recvStr()
 
         return str;
     }
-    else
-    {
-        return NULL;
-    }
+
+    return NULL;
 }
 
 bool Connection::sendPid(pid_t pid)
@@ -220,15 +199,13 @@ uint32_t Connection::receiveMagic()
     // Receive the magic.
     recvMsg(&magic);
 
-    if ((magic & INVOKER_MSG_MASK) == INVOKER_MSG_MAGIC)
-    {
-        if (!((magic & INVOKER_MSG_MAGIC_VERSION_MASK) == INVOKER_MSG_MAGIC_VERSION))
-        {
+    if ((magic & INVOKER_MSG_MASK) == INVOKER_MSG_MAGIC) {
+        if (!((magic & INVOKER_MSG_MAGIC_VERSION_MASK) == INVOKER_MSG_MAGIC_VERSION)) {
             Logger::logError("Connection: receiving bad magic version (%08x)\n", magic);
             return -1;
         }
     }
-    m_sendPid  = magic & INVOKER_MSG_MAGIC_OPTION_WAIT;
+    m_sendPid = magic & INVOKER_MSG_MAGIC_OPTION_WAIT;
 
     return magic & INVOKER_MSG_MAGIC_OPTION_MASK;
 }
@@ -239,15 +216,13 @@ string Connection::receiveAppName()
 
     // Get the action.
     recvMsg(&msg);
-    if (msg != INVOKER_MSG_NAME)
-    {
+    if (msg != INVOKER_MSG_NAME) {
         Logger::logError("Connection: receiving invalid action (%08x)", msg);
         return string();
     }
 
     char *name = recvStr();
-    if (!name)
-    {
+    if (!name) {
         Logger::logError("Connection: receiving application name");
         return string();
     }
@@ -328,18 +303,16 @@ bool Connection::receiveEnv()
     // Get number of environment variables.
     uint32_t n_vars = 0;
     recvMsg(&n_vars);
-    if (n_vars > 0 && n_vars < MAX_VARS)
-    {
+    if (n_vars > 0 && n_vars < MAX_VARS) {
         // Get environment variables
-        for (uint32_t i = 0; i < n_vars; i++)
-        {
+        for (uint32_t i = 0; i < n_vars; i++) {
             char *var = recvStr();
-            if (var == NULL)
-            {
+            if (var == NULL) {
                 Logger::logError("Connection: receiving environ[%i]", i);
                 return false;
             }
             char *val = strchr(var, '=');
+
             if (val) {
                 *val++ = 0;
                 const char *cur = getenv(var);
@@ -356,9 +329,7 @@ bool Connection::receiveEnv()
             }
             delete [] var;
         }
-    }
-    else
-    {
+    } else {
         Logger::logError("Connection: invalid environment variable count %d", n_vars);
         return false;
     }
@@ -391,22 +362,19 @@ bool Connection::receiveIO()
 
     memcpy(CMSG_DATA(cmsg), m_io, sizeof(m_io));
 
-    if (recvmsg(m_fd, &msg, 0) < 0)
-    {
+    if (recvmsg(m_fd, &msg, 0) < 0) {
         Logger::logWarning("Connection: recvmsg failed in invoked_get_io: %s", strerror(errno));
         return false;
     }
 
-    if (msg.msg_flags)
-    {
+    if (msg.msg_flags) {
         Logger::logWarning("Connection: unexpected msg flags in invoked_get_io");
         return false;
     }
 
     cmsg = CMSG_FIRSTHDR(&msg);
-    if (cmsg == NULL || cmsg->cmsg_len != CMSG_LEN(sizeof(m_io)) ||
-        cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS)
-    {
+    if (cmsg == NULL || cmsg->cmsg_len != CMSG_LEN(sizeof(m_io))
+        || cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SCM_RIGHTS) {
         Logger::logWarning("Connection: invalid cmsg in invoked_get_io");
         return false;
     }
@@ -420,16 +388,14 @@ bool Connection::receiveActions()
 {
     Logger::logDebug("Connection: enter: %s", __FUNCTION__);
 
-    for (;;)
-    {
+    for (;;) {
         uint32_t action = 0;
 
         // Get the action.
         if (!recvMsg(&action))
             return false;
 
-        switch (action)
-        {
+        switch (action) {
         case INVOKER_MSG_EXEC:
             if (!receiveExec())
                 return false;
@@ -487,27 +453,24 @@ bool Connection::receiveActions()
     }
 }
 
-bool Connection::receiveApplicationData(AppData* appData)
+bool Connection::receiveApplicationData(AppData *appData)
 {
     // Read magic number
     appData->setOptions(receiveMagic());
-    if (appData->options() == -1)
-    {
+    if (appData->options() == -1) {
         Logger::logError("Connection: receiving magic failed\n");
         return false;
     }
 
     // Read application name
     appData->setAppName(receiveAppName());
-    if (appData->appName().empty())
-    {
+    if (appData->appName().empty()) {
         Logger::logError("Connection: receiving application name failed\n");
         return false;
     }
 
     // Read application parameters
-    if (receiveActions())
-    {
+    if (receiveActions()) {
         appData->setFileName(m_fileName);
         appData->setPriority(m_priority);
         appData->setDelay(m_delay);
@@ -515,9 +478,7 @@ bool Connection::receiveApplicationData(AppData* appData)
         appData->setArgv((const char **)m_argv);
         appData->setIODescriptors(vector<int>(m_io, m_io + IO_DESCRIPTOR_COUNT));
         appData->setIDs(m_uid, m_gid);
-    }
-    else
-    {
+    } else {
         Logger::logError("Connection: receiving application parameters failed\n");
         return false;
     }
@@ -535,11 +496,9 @@ pid_t Connection::peerPid()
     struct ucred cr;
 
     socklen_t len = sizeof(struct ucred);
-    if (getsockopt(m_fd, SOL_SOCKET, SO_PEERCRED, &cr, &len) < 0)
-    {
+    if (getsockopt(m_fd, SOL_SOCKET, SO_PEERCRED, &cr, &len) < 0) {
         Logger::logError("Connection: can't get peer's pid: %s\n", strerror(errno));
         return 0;
     }
     return cr.pid;
-
 }

@@ -41,6 +41,11 @@ AppData::AppData() :
     m_uid(0)
 {}
 
+AppData::~AppData()
+{
+    setArgv(nullptr);
+}
+
 void AppData::setOptions(uint32_t newOptions)
 {
     m_options = newOptions;
@@ -283,10 +288,4 @@ bool AppData::isPrivileged() const
 string AppData::privileges() const
 {
     return m_privileges;
-}
-
-
-AppData::~AppData()
-{
-    setArgv(nullptr);
 }

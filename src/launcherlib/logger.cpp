@@ -104,4 +104,3 @@ void Logger::setDebugMode(bool enable)
     else
         report_set_type(report_warning);
 }
-

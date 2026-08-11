@@ -43,7 +43,6 @@ using std::string;
 class DECL_EXPORT Connection
 {
 public:
-
     /*! \brief Constructor.
      *  \param socketFd Fd of the UNIX file socket to be used.
      *  \param testMode Bypass all real socket activity to help unit testing.
@@ -52,7 +51,6 @@ public:
 
     //! Destructor
     virtual ~Connection();
-
 
     /*! \brief Accept connection.
      * Accept a socket connection from the invoker.
@@ -85,7 +83,6 @@ public:
     bool sendExitValue(int value);
 
 private:
-
     /*! \brief Receive actions.
      * This method executes the actual data-receiving loop and terminates
      * after INVOKER_MSG_END is received.
@@ -160,7 +157,6 @@ private:
     bool     m_sendPid;
     gid_t    m_gid;
     uid_t    m_uid;
-
 
 #ifdef UNIT_TEST
     friend class Ut_Connection;

@@ -169,8 +169,8 @@ sailjail_application_info(DBusConnection *con, const char *desktop)
     }
 
     if (!(rsp = dbus_connection_send_with_reply_and_block(con, req, DBUS_TIMEOUT_INFINITE, &err))) {
-        if (strcmp(err.name, CODE_INVALID_ARGS) ||
-                strncmp(err.message, ERROR_INVALID_APPNAME, strlen(ERROR_INVALID_APPNAME))) {
+        if (strcmp(err.name, CODE_INVALID_ARGS)
+            || strncmp(err.message, ERROR_INVALID_APPNAME, strlen(ERROR_INVALID_APPNAME))) {
             error("method call failed: %s: %s", err.name, err.message);
         }
         goto EXIT;
@@ -516,8 +516,8 @@ sailjailclient_validate_argv(const char *exec, const gchar **app_argv)
      * line to the binary name.
      */
     const char **tpl_argv = (const char **)exec_argv;
-    if (!path_dirname_eq(app_argv[0], BINDIR) ||
-            g_strcmp0(*tpl_argv, path_basename(app_argv[0]))) {
+    if (!path_dirname_eq(app_argv[0], BINDIR)
+        || g_strcmp0(*tpl_argv, path_basename(app_argv[0]))) {
         /* App is not specified without path as the first argument,
          * => there might be 'wrappers' and we match to full path.
          */

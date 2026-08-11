@@ -338,8 +338,7 @@ static bool invoke_recv_ack(int fd)
 
     invoke_recv_msg(fd, &action);
 
-    if (action != INVOKER_MSG_ACK)
-    {
+    if (action != INVOKER_MSG_ACK) {
         die(1, "Received wrong ack (%08x)\n", action);
     }
 
@@ -436,8 +435,7 @@ static bool invoker_recv_exit(int fd, int* status)
     // Receive action.
     bool res = invoke_recv_msg(fd, &action);
 
-    if (!res || (action != INVOKER_MSG_EXIT))
-    {
+    if (!res || (action != INVOKER_MSG_EXIT)) {
         // Boosted application process was killed somehow.
         // Let's give applauncherd process some time to cope 
         // with this situation.
@@ -478,8 +476,7 @@ static void invoker_send_args(int fd, int argc, char **argv)
 
     invoke_send_msg(fd, INVOKER_MSG_ARGS);
     invoke_send_msg(fd, argc);
-    for (i = 0; i < argc; i++)
-    {
+    for (i = 0; i < argc; i++) {
         info("param %d %s \n", i, argv[i]);
         invoke_send_str(fd, argv[i]);
     }
@@ -517,8 +514,7 @@ static void invoker_send_env(int fd)
     invoke_send_msg(fd, INVOKER_MSG_ENV);
     invoke_send_msg(fd, n_vars);
 
-    for (i = 0; i < n_vars; i++)
-    {
+    for (i = 0; i < n_vars; i++) {
         invoke_send_str(fd, environ[i]);
     }
 
@@ -555,8 +551,7 @@ static void invoker_send_io(int fd)
     msg.msg_controllen = cmsg->cmsg_len;
 
     invoke_send_msg(fd, INVOKER_MSG_IO);
-    if (sendmsg(fd, &msg, 0) < 0)
-    {
+    if (sendmsg(fd, &msg, 0) < 0) {
         warning("sendmsg failed in invoker_send_io: %s \n", strerror(errno));
     }
 
@@ -629,16 +624,14 @@ static unsigned int get_delay(char *delay_arg, char *param_name,
 {
     unsigned int delay = EXIT_DELAY;
 
-    if (delay_arg)
-    {
+    if (delay_arg) {
         errno = 0; // To distinguish success/failure after call
         delay = strtoul(delay_arg, NULL, 10);
 
         // Check for various possible errors
         if (errno == ERANGE
             || delay < min_value
-            || delay > max_value)
-        {
+            || delay > max_value) {
             report(report_error, "Wrong value of %s parameter: %s\n", param_name, delay_arg);
             usage(1);
         }
@@ -801,8 +794,7 @@ static int invoke_remote(int socket_fd, const InvokeArgs *args)
     // Get process priority
     errno = 0;
     int prog_prio = getpriority(PRIO_PROCESS, 0);
-    if (errno && prog_prio < 0)
-    {
+    if (errno && prog_prio < 0) {
         prog_prio = 0;
     }
 
@@ -843,18 +835,14 @@ static void invoke_fallback(const InvokeArgs *args)
     error("Start application %s as a binary executable without launcher...\n", args->prog_name);
 
     // Fork if wait_term not set
-    if (!args->wait_term)
-    {
+    if (!args->wait_term) {
         // Fork a new process
         pid_t newPid = fork();
 
-        if (newPid == -1)
-        {
+        if (newPid == -1) {
             error("Invoker failed to fork. \n");
             exit(EXIT_FAILURE);
-        }
-        else if (newPid != 0) /* parent process */
-        {
+        } else if (newPid != 0) { /* parent process */
             return;
         }
     }
@@ -943,8 +931,7 @@ int main(int argc, char *argv[])
     InvokeArgs args = INVOKE_ARGS_INIT;
     bool auto_application = false;
     // Called with a different name (old way of using invoker) ?
-    if (!strstr(argv[0], PROG_NAME_INVOKER) )
-    {
+    if (!strstr(argv[0], PROG_NAME_INVOKER)) {
         die(1,
             "Incorrect use of invoker, don't use symlinks. "
             "Run invoker explicitly from e.g. a D-Bus service file instead.\n");
@@ -978,10 +965,8 @@ int main(int argc, char *argv[])
     // The use of + for POSIXLY_CORRECT behavior is a GNU extension, but avoids polluting
     // the environment
     int opt;
-    while ((opt = getopt_long(argc, argv, "+hvcwnGDsoTd:t:a:Ar:S:L:F:I:", longopts, NULL)) != -1)
-    {
-        switch(opt)
-        {
+    while ((opt = getopt_long(argc, argv, "+hvcwnGDsoTd:t:a:Ar:S:L:F:I:", longopts, NULL)) != -1) {
+        switch(opt) {
         case 'h':
             usage(0);
             break;
@@ -1120,8 +1105,7 @@ int main(int argc, char *argv[])
         info("Invoker test mode is not enabled.\n");
     }
 
-    if (pipe(g_signal_pipe) == -1)
-    {
+    if (pipe(g_signal_pipe) == -1) {
         report(report_error, "Creating a pipe for Unix signals failed!\n");
         exit(EXIT_FAILURE);
     }

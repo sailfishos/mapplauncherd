@@ -319,12 +319,9 @@ Daemon::Daemon(int & argc, char * argv[]) :
     setUnixSignalHandler(SIGPIPE, write_to_signal_pipe); // broken invoker's pipe
     setUnixSignalHandler(SIGHUP,  write_to_signal_pipe); // re-exec
 
-    if (!Daemon::m_instance)
-    {
+    if (!Daemon::m_instance) {
         Daemon::m_instance = this;
-    }
-    else
-    {
+    } else {
         throw std::runtime_error("Daemon: Daemon already created!\n");
     }
 
@@ -335,13 +332,11 @@ Daemon::Daemon(int & argc, char * argv[]) :
     // Parse arguments
     parseArgs(argc, argv);
 
-    if (socketpair(AF_UNIX, SOCK_DGRAM, 0, m_boosterLauncherSocket) == -1)
-    {
+    if (socketpair(AF_UNIX, SOCK_DGRAM, 0, m_boosterLauncherSocket) == -1) {
         throw std::runtime_error("Daemon: Creating a socket pair for boosters failed!\n");
     }
 
-    if (pipe(m_sigPipeFd) == -1)
-    {
+    if (pipe(m_sigPipeFd) == -1) {
         throw std::runtime_error("Daemon: Creating a pipe for Unix signals failed!\n");
     }
 }
@@ -370,8 +365,7 @@ void Daemon::run(Booster *booster)
     m_socketManager->initSocket(booster->socketId());
 
     // Daemonize if desired
-    if (m_daemon)
-    {
+    if (m_daemon) {
         daemonize();
     }
 
@@ -386,8 +380,7 @@ void Daemon::run(Booster *booster)
     }
 
     // Main loop
-    while (true)
-    {
+    while (true) {
         // Variables used by the select call
         fd_set rfds;
         int ndfs = 0;
@@ -411,25 +404,21 @@ void Daemon::run(Booster *booster)
         }
 
         // Wait for something appearing in the pipes.
-        if (select(ndfs + 1, &rfds, NULL, NULL, NULL) > 0)
-        {
+        if (select(ndfs + 1, &rfds, NULL, NULL, NULL) > 0) {
             Logger::logDebug("Daemon: select done.");
 
             // Check if a booster died
-            if (FD_ISSET(m_boosterLauncherSocket[0], &rfds))
-            {
+            if (FD_ISSET(m_boosterLauncherSocket[0], &rfds)) {
                 Logger::logDebug("Daemon: FD_ISSET(m_boosterLauncherSocket[0])");
                 readFromBoosterSocket(m_boosterLauncherSocket[0]);
             }
 
             // Check if we got SIGCHLD, SIGTERM, SIGUSR1 or SIGUSR2
-            if (FD_ISSET(m_sigPipeFd[0], &rfds))
-            {
+            if (FD_ISSET(m_sigPipeFd[0], &rfds)) {
                 Logger::logDebug("Daemon: FD_ISSET(m_sigPipeFd[0])");
                 int dataReceived = read_from_signal_pipe(m_sigPipeFd[0]);
 
-                switch (dataReceived)
-                {
+                switch (dataReceived) {
                 case SIGCHLD:
                     Logger::logDebug("Daemon: SIGCHLD received.");
                     reapZombies();
@@ -442,11 +431,9 @@ void Daemon::run(Booster *booster)
                     // FIXME: Legacy pid file path -> see daemonize()
                     const std::string pidFilePath = m_socketManager->socketRootPath() + m_booster->boosterType() + ".pid";
                     FILE * const pidFile = fopen(pidFilePath.c_str(), "r");
-                    if (pidFile)
-                    {
+                    if (pidFile) {
                         pid_t filePid;
-                        if (fscanf(pidFile, "%d\n", &filePid) == 1 && filePid == getpid())
-                        {
+                        if (fscanf(pidFile, "%d\n", &filePid) == 1 && filePid == getpid()) {
                             unlink(pidFilePath.c_str());
                         }
                         fclose(pidFile);
@@ -620,11 +607,9 @@ void Daemon::readFromBoosterSocket(int fd)
 
 void Daemon::killProcess(pid_t pid, int signal) const
 {
-    if (pid > 0)
-    {
+    if (pid > 0) {
         Logger::logWarning("Daemon: Killing pid %d with %d", pid, signal);
-        if (kill(pid, signal) != 0)
-        {
+        if (kill(pid, signal) != 0) {
             Logger::logError("Daemon: Failed to kill %d: %s\n",
                              pid, strerror(errno));
         }
@@ -634,18 +619,12 @@ void Daemon::killProcess(pid_t pid, int signal) const
 void Daemon::loadSingleInstancePlugin()
 {
     void * handle = dlopen(SINGLE_INSTANCE_PATH, RTLD_NOW);
-    if (!handle)
-    {
+    if (!handle) {
         Logger::logWarning("Daemon: dlopening single-instance failed: %s", dlerror());
-    }
-    else
-    {
-        if (m_singleInstance->validateAndRegisterPlugin(handle))
-        {
+    } else {
+        if (m_singleInstance->validateAndRegisterPlugin(handle)) {
             Logger::logDebug("Daemon: single-instance plugin loaded.'");
-        }
-        else
-        {
+        } else {
             Logger::logWarning("Daemon: Invalid single-instance plugin: '%s'",
                                SINGLE_INSTANCE_PATH);
         }
@@ -681,8 +660,7 @@ void Daemon::forkBooster(int sleepTime)
     if (newPid == -1)
         throw std::runtime_error("Daemon: Forking while invoking");
 
-    if (newPid == 0) /* Child process */
-    {
+    if (newPid == 0) { /* Child process */
         // Will be reopened with new identity when/if
         // there is something to report
         Logger::closeLog();
@@ -702,8 +680,7 @@ void Daemon::forkBooster(int sleepTime)
 
         // Close socket file descriptors
         FdMap::iterator i(m_boosterPidToInvokerFd.begin());
-        while (i != m_boosterPidToInvokerFd.end())
-        {
+        while (i != m_boosterPidToInvokerFd.end()) {
             if ((*i).second != -1) {
                 close((*i).second);
                 (*i).second = -1;
@@ -749,9 +726,7 @@ void Daemon::forkBooster(int sleepTime)
         // _exit() instead of exit() to avoid situation when destructors
         // for static objects may be run incorrectly
         _exit(retval);
-    }
-    else /* Parent process */
-    {
+    } else { /* Parent process */
         // Store the pid so that we can reap it later
         m_children.push_back(newPid);
 
@@ -765,13 +740,11 @@ void Daemon::reapZombies()
 {
     // Loop through all child pid's and wait for them with WNOHANG.
     PidVect::iterator i(m_children.begin());
-    while (i != m_children.end())
-    {
+    while (i != m_children.end()) {
         // Check if the pid had exited and become a zombie
         int status = 0;
         pid_t pid = waitpid(*i, &status, WNOHANG);
-        if (pid > 0)
-        {
+        if (pid > 0) {
             // The pid had exited. Remove it from the pid vector.
             i = m_children.erase(i);
 
@@ -813,13 +786,10 @@ void Daemon::reapZombies()
             close_invoker(invoker_pid, socket_fd, exit_status);
 
             // Check if pid belongs to a booster and restart the dead booster if needed
-            if (pid == m_boosterPid)
-            {
+            if (pid == m_boosterPid) {
                 forkBooster(m_boosterSleepTime);
             }
-        }
-        else
-        {
+        } else {
             i++;
         }
     }
@@ -845,8 +815,7 @@ void Daemon::daemonize()
         throw std::runtime_error("Daemon: Unable to fork daemon");
 
     // If we got a good PID, then we can exit the parent process.
-    if (pid > 0)
-    {
+    if (pid > 0) {
         // Wait for the child fork to exit to ensure the PID has been written before a caller
         // is notified of the exit.
         waitpid(pid, NULL, 0);
@@ -859,8 +828,7 @@ void Daemon::daemonize()
         throw std::runtime_error("Daemon: Unable to fork daemon");
 
     // If we got a good PID, then we can exit the parent process.
-    if (pid > 0)
-    {
+    if (pid > 0) {
         /* FIXME: Existing booster systemd unit files etc are expecting
          *        pid file paths derived from booster type. As long as
          *        there are no application specific boosters using
@@ -874,8 +842,7 @@ void Daemon::daemonize()
         const std::string pidFilePath = m_socketManager->socketRootPath() + m_booster->boosterType() + ".pid";
 #endif
         FILE * const pidFile = fopen(pidFilePath.c_str(), "w");
-        if (pidFile)
-        {
+        if (pidFile) {
             fprintf(pidFile, "%d\n", pid);
             fclose(pidFile);
         }
@@ -1022,34 +989,28 @@ int Daemon::sigPipeFd() const
 
 void Daemon::enterNormalMode()
 {
-    if (m_bootMode)
-    {
+    if (m_bootMode) {
         m_bootMode = false;
 
         // Kill current boosters
         killBoosters();
 
         Logger::logInfo("Daemon: Exited boot mode.");
-    }
-    else
-    {
+    } else {
         Logger::logInfo("Daemon: Already in normal mode.");
     }
 }
 
 void Daemon::enterBootMode()
 {
-    if (!m_bootMode)
-    {
+    if (!m_bootMode) {
         m_bootMode = true;
 
         // Kill current boosters
         killBoosters();
 
         Logger::logInfo("Daemon: Entered boot mode.");
-    }
-    else
-    {
+    } else {
         Logger::logInfo("Daemon: Already in boot mode.");
     }
 }
@@ -1080,8 +1041,7 @@ void Daemon::setUnixSignalHandler(int signum, sighandler_t handler)
 
 void Daemon::restoreUnixSignalHandlers()
 {
-    for (SigHandlerMap::iterator it = m_originalSigHandlers.begin(); it != m_originalSigHandlers.end(); it++ )
-    {
+    for (SigHandlerMap::iterator it = m_originalSigHandlers.begin(); it != m_originalSigHandlers.end(); it++ ) {
         int signum = it->first;
         if (signal(signum, SIG_DFL) == SIG_ERR)
             warning("untrap(%s): %m", strsignal(signum));
@@ -1090,7 +1050,6 @@ void Daemon::restoreUnixSignalHandlers()
     }
     m_originalSigHandlers.clear();
 }
-
 
 Daemon::~Daemon()
 {

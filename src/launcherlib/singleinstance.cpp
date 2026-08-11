@@ -28,8 +28,7 @@ bool SingleInstance::validateAndRegisterPlugin(void * handle)
 
     // Check error
     char * error = NULL;
-    if ((error = dlerror()) != NULL)
-    {
+    if ((error = dlerror()) != NULL) {
         return false;
     }
 
@@ -38,19 +37,17 @@ bool SingleInstance::validateAndRegisterPlugin(void * handle)
     unlock_func_t unlock = (unlock_func_t)dlsym(handle, "unlock");
 
     // Check error
-    if ((error = dlerror()) != NULL)
-    {
+    if ((error = dlerror()) != NULL) {
         return false;
     }
 
     // Check if activateExistingInstance() is there
     dlerror();
-    activate_func_t activateExistingInstance =
-            (activate_func_t)dlsym(handle, "activateExistingInstance");
+    activate_func_t activateExistingInstance
+        = (activate_func_t)dlsym(handle, "activateExistingInstance");
 
     // Check error
-    if ((error = dlerror()) != NULL)
-    {
+    if ((error = dlerror()) != NULL) {
         return false;
     }
 
@@ -71,8 +68,7 @@ SingleInstancePluginEntry * SingleInstance::pluginEntry() const
 
 void SingleInstance::closePlugin()
 {
-    if (m_pluginEntry)
-    {
+    if (m_pluginEntry) {
         dlclose(m_pluginEntry->handle);
         m_pluginEntry.reset();
     }

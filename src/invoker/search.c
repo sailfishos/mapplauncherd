@@ -33,8 +33,7 @@ static char* merge_paths(const char *base_path, const char *rel_path)
 
     if (asprintf(&path, "%s%s%s", base_path,
                  (base_path[strlen(base_path) - 1] == '/' ? "" : "/"),
-                 rel_path) < 0)
-    {
+                 rel_path) < 0) {
         die(1, "allocating merge path buffer");
     }
     return path;
@@ -45,34 +44,26 @@ char* search_program(const char *progname)
     char *launch = NULL;
     char *cwd;
 
-    if (progname[0] == '/')
-    {
+    if (progname[0] == '/') {
         launch = strdup(progname);
-        if (!launch)
-        {
+        if (!launch) {
             die(1, "allocating program name buffer");
         }
-    }
-    else if (strchr(progname, '/') != NULL)
-    {
+    } else if (strchr(progname, '/') != NULL) {
         cwd = get_current_dir_name();
         launch = merge_paths(cwd, progname);
         free(cwd);
-    }
-    else
-    {
+    } else {
         char *path = getenv("PATH");
         char *saveptr = NULL;
         char *token;
 
-        if (path == NULL)
-        {
+        if (path == NULL) {
             die(1, "could not get PATH environment variable");
         }
         path = strdup(path);
 
-        for (token = strtok_r(path, ":", &saveptr); token != NULL; token = strtok_r(NULL, ":", &saveptr))
-        {
+        for (token = strtok_r(path, ":", &saveptr); token != NULL; token = strtok_r(NULL, ":", &saveptr)) {
             launch = merge_paths(token, progname);
 
             if (access(launch, X_OK) == 0)
@@ -84,13 +75,11 @@ char* search_program(const char *progname)
 
         free(path);
 
-        if (launch == NULL)
-        {
+        if (launch == NULL) {
             die(1, "could not locate program \"%s\" to launch \n", progname);
         }
 
-        if (launch[0] != '/')
-        {
+        if (launch[0] != '/') {
             char *relative = launch;
 
             cwd = get_current_dir_name();
@@ -100,6 +89,6 @@ char* search_program(const char *progname)
             free(relative);
         }
     }
+
     return launch;
 }
-

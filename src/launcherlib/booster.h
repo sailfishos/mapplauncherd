@@ -51,7 +51,6 @@ class SingleInstance;
 class DECL_EXPORT Booster
 {
 public:
-
     //! Constructor
     Booster();
 
@@ -130,7 +129,6 @@ public:
     bool bootMode() const;
 
 protected:
-
     /*!
      * Set process environment (UID, GID..) before launch.
      * Re-implement if needed. This is automatically called by
@@ -181,7 +179,6 @@ protected:
     AppData* m_appData;
 
 private:
-
     //! Disable copy-constructor
     Booster(const Booster & r);
 

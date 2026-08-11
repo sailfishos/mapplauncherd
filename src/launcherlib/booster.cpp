@@ -62,26 +62,26 @@ static std::string basename(const std::string &str)
     return str.substr(str.find_last_of("/") + 1);
 }
 
-Booster::Booster() :
-    m_appData(new AppData),
-    m_connection(NULL),
-    m_spaceAvailable(0),
-    m_boostedApplication("default"),
-    m_bootMode(false)
+Booster::Booster()
+    : m_appData(new AppData)
+    , m_connection(nullptr)
+    , m_spaceAvailable(0)
+    , m_boostedApplication("default")
+    , m_bootMode(false)
 {
 }
 
 Booster::~Booster()
 {
     delete m_connection;
-    m_connection = NULL;
+    m_connection = nullptr;
 
     delete m_appData;
-    m_appData = NULL;
+    m_appData = nullptr;
 }
 
-void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLauncherSocket,
-                         int socketFd, SingleInstance * singleInstance,
+void Booster::initialize(int initialArgc, char **initialArgv, int newBoosterLauncherSocket,
+                         int socketFd, SingleInstance *singleInstance,
                          bool newBootMode)
 {
     m_bootMode = newBootMode;
@@ -99,31 +99,26 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
     const char * tempArgv[] = {temporaryProcessName.c_str()};
     renameProcess(initialArgc, initialArgv, 1, tempArgv);
 
-    while (true)
-    {
+    while (true) {
         // Wait and read commands from the invoker
         Logger::logDebug("Booster: Wait for message from invoker");
         if (!receiveDataFromInvoker(socketFd))
             throw std::runtime_error("Booster: Couldn't read command\n");
 
         // Run process as single instance if requested
-        if (m_appData->singleInstance())
-        {
+        if (m_appData->singleInstance()) {
             // Check if instance is already running
             SingleInstancePluginEntry * pluginEntry = singleInstance->pluginEntry();
-            if (pluginEntry)
-            {
+
+            if (pluginEntry) {
                 std::string lockedAppName = getFinalName(m_appData->appName());
-                if (!pluginEntry->lockFunc(lockedAppName.c_str()))
-                {
+
+                if (!pluginEntry->lockFunc(lockedAppName.c_str())) {
                     // Try to activate the window of the existing instance
-                    if (!pluginEntry->activateExistingInstanceFunc(lockedAppName.c_str()))
-                    {
+                    if (!pluginEntry->activateExistingInstanceFunc(lockedAppName.c_str())) {
                         Logger::logWarning("Booster: Can't activate existing instance of the application!");
                         m_connection->sendExitValue(EXIT_FAILURE);
-                    }
-                    else
-                    {
+                    } else {
                         m_connection->sendExitValue(EXIT_SUCCESS);
                     }
                     m_connection->close();
@@ -135,14 +130,12 @@ void Booster::initialize(int initialArgc, char ** initialArgv, int newBoosterLau
 
                 // Close the single-instance plugin
                 singleInstance->closePlugin();
-            }
-            else
-            {
+            } else {
                 Logger::logWarning("Booster: Single-instance launch wanted, but single-instance plugin not loaded!");
             }
         }
 
-        //this instance of booster will be used to start application, exit from the loop
+        // this instance of booster will be used to start application, exit from the loop
         break;
     }
 
@@ -201,8 +194,7 @@ void Booster::sendDataToParent()
     // invoker <-> booster socket connection to the parent process (launcher)
     // so that it can send the exit status back to invoker. It'd be impossible
     // from the booster process if exec() was used.
-    if (m_connection->isReportAppExitStatusNeeded())
-    {
+    if (m_connection->isReportAppExitStatusNeeded()) {
         // Send socket file descriptor to parent
         int fd = m_connection->getFd();
         msg.msg_control    = buf;
@@ -213,16 +205,13 @@ void Booster::sendDataToParent()
         cmsg->cmsg_len     = CMSG_LEN(sizeof(int));
         memcpy(CMSG_DATA(cmsg), &fd, sizeof(int));
         debug("send to daemon: pid=%d delay=%d fd=%d", (int)pid, delay, fd);
-    }
-    else
-    {
+    } else {
         msg.msg_control    = NULL;
         msg.msg_controllen = 0;
         debug("send to daemon: pid=%d delay=%d fd=NA", (int)pid, delay);
     }
 
-    if (sendmsg(boosterLauncherSocket(), &msg, 0) < 0)
-    {
+    if (sendmsg(boosterLauncherSocket(), &msg, 0) < 0) {
         Logger::logError("Booster: Couldn't send data to launcher process\n");
     }
 }
@@ -231,29 +220,23 @@ bool Booster::receiveDataFromInvoker(int socketFd)
 {
     // delete previous connection instance because booster can
     // connect with several invokers due to single-instance feature
-    if (m_connection != NULL)
-    {
-        delete  m_connection;
-        m_connection = NULL;
-    }
+    delete  m_connection;
+    m_connection = nullptr;
 
     // Setup the conversation channel with the invoker.
     m_connection = new Connection(socketFd);
 
     // Accept a new invocation.
-    if (m_connection->accept(m_appData))
-    {
+    if (m_connection->accept(m_appData)) {
         // Receive application data from the invoker
-        if (!m_connection->receiveApplicationData(m_appData))
-        {
+        if (!m_connection->receiveApplicationData(m_appData)) {
             m_connection->close();
             return false;
         }
 
         // Close the connection if exit status doesn't need
         // to be sent back to invoker
-        if (!m_connection->isReportAppExitStatusNeeded())
-        {
+        if (!m_connection->isReportAppExitStatusNeeded()) {
             m_connection->close();
         }
 
@@ -263,14 +246,12 @@ bool Booster::receiveDataFromInvoker(int socketFd)
     return false;
 }
 
-int Booster::run(SocketManager * socketManager)
+int Booster::run(SocketManager *socketManager)
 {
-    if (!m_appData->fileName().empty())
-    {
+    if (!m_appData->fileName().empty()) {
         // We can close sockets here because
         // socket FD is passed to daemon already
-        if (socketManager)
-        {
+        if (socketManager) {
             socketManager->closeAllSockets();
         }
 
@@ -284,8 +265,8 @@ int Booster::run(SocketManager * socketManager)
             if (boostedApplication() != "default") {
                 if (!sailjail_verify_launch(boostedApplication().c_str(), m_appData->argv()))
                     throw std::runtime_error("Booster: Binary doesn't have launch permissions\n");
-            } else if (m_appData->fileName() != SAILJAIL_PATH &&
-                    sailjail_sandbox(basename(m_appData->fileName()).c_str())) {
+            } else if (m_appData->fileName() != SAILJAIL_PATH
+                       && sailjail_sandbox(basename(m_appData->fileName()).c_str())) {
                 Logger::logDebug("Sandboxing '%s'", m_appData->fileName());
                 // Prepend sailjail to arguments
                 m_appData->prependArgv(SAILJAIL_PATH);
@@ -299,9 +280,7 @@ int Booster::run(SocketManager * socketManager)
             fprintf(stderr, "Failed to invoke: %s\n", e.what());
             return EXIT_FAILURE;
         }
-    }
-    else
-    {
+    } else {
         Logger::logError("Booster: nothing to invoke\n");
         return EXIT_FAILURE;
     }
@@ -310,21 +289,18 @@ int Booster::run(SocketManager * socketManager)
 void Booster::renameProcess(int parentArgc, char** parentArgv,
                             int sourceArgc, const char** sourceArgv)
 {
-    if (sourceArgc > 0 && parentArgc > 0)
-    {
+    if (sourceArgc > 0 && parentArgc > 0) {
         // Calculate original space reserved for arguments, if not
         // already calculated
         if (!m_spaceAvailable)
             for (int i = 0; i < parentArgc; i++)
                 m_spaceAvailable += strlen(parentArgv[i]) + 1;
 
-        if (m_spaceAvailable)
-        {
+        if (m_spaceAvailable) {
             // Build a contiguous, NULL-separated block for the new arguments.
             // This is how Linux puts them.
             std::string newArgv;
-            for (int i = 0; i < sourceArgc; i++)
-            {
+            for (int i = 0; i < sourceArgc; i++) {
                 newArgv += sourceArgv[i];
                 newArgv += '\0';
             }
@@ -335,8 +311,7 @@ void Booster::renameProcess(int parentArgc, char** parentArgv,
             // Reset the old space
             memset(parentArgv[0], '\0', m_spaceAvailable);
 
-            if (spaceNeeded > 0)
-            {
+            if (spaceNeeded > 0) {
                 // Copy the argument data. Note: if they don't fit, then
                 // they are just cut off.
                 memcpy(parentArgv[0], newArgv.c_str(), spaceNeeded);
@@ -347,24 +322,30 @@ void Booster::renameProcess(int parentArgc, char** parentArgv,
         }
 
         // Set the process name using prctl, 'killall' and 'top' use it
-	char* processName = strdup(sourceArgv[0]);
-        if ( prctl(PR_SET_NAME, basename(processName)) == -1 )
+        char* processName = strdup(sourceArgv[0]);
+
+        if (prctl(PR_SET_NAME, basename(processName)) == -1)
             Logger::logError("Booster: on set new process name: %s ", strerror(errno));
 
-	std::free(processName);
-
+        std::free(processName);
         setenv("_", sourceArgv[0], true);
     }
 }
 
-struct NotCharacter {
+struct NotCharacter
+{
     char c;
 
     NotCharacter(const char &c) : c(c) {}
-    bool operator()(const char &c) const { return c != this->c; }
+
+    bool operator()(const char &c) const
+    {
+        return c != this->c;
+    }
 };
 
-static bool mkdirRecursive(const int dirfd, const std::string &path) {
+static bool mkdirRecursive(const int dirfd, const std::string &path)
+{
     static const mode_t MODE = 0775;
 
     struct stat st;
@@ -390,17 +371,17 @@ static bool mkdirRecursive(const int dirfd, const std::string &path) {
     return true;
 }
 
-static void setCgroup(const std::string &exePath) {
+static void setCgroup(const std::string &exePath)
+{
     static const char *BOOSTER_CGROUP_TREE = "/sys/fs/cgroup/booster";
     static const char *CGROUP_PROCS = "cgroup.procs";
     static const char *PROC_PID = "0";
 
     int fd = -1;
-    DIR *dir = NULL;
     char *cpath = NULL;
     std::string path;
+    DIR *dir = opendir(BOOSTER_CGROUP_TREE);
 
-    dir = opendir(BOOSTER_CGROUP_TREE);
     if (!dir) {
         Logger::logDebug("No named booster cgroup hierarchy '%s'", BOOSTER_CGROUP_TREE);
         goto early;
@@ -443,8 +424,6 @@ early:
     if (fd >= 0) {
         close(fd);
     }
-
-    return;
 }
 
 void Booster::setEnvironmentBeforeLaunch()
@@ -475,10 +454,8 @@ void Booster::setEnvironmentBeforeLaunch()
         resetOomAdj();
 
     // Duplicate I/O descriptors
-    for (unsigned int i = 0; i < m_appData->ioDescriptors().size(); i++)
-    {
-        if (m_appData->ioDescriptors()[i] > 0)
-        {
+    for (unsigned int i = 0; i < m_appData->ioDescriptors().size(); i++) {
+        if (m_appData->ioDescriptors()[i] > 0) {
             dup2(m_appData->ioDescriptors()[i], i);
             close(m_appData->ioDescriptors()[i]);
         }
@@ -577,6 +554,7 @@ void Booster::setBoostedApplication(const string &application)
     filtered.reserve(application.size());
     bool alnum = false;
     bool error = false;
+
     for (auto chr : application) {
         switch (chr) {
         case 'A' ... 'Z':
@@ -623,14 +601,11 @@ const string Booster::socketId() const
 
 pid_t Booster::invokersPid()
 {
-    if (m_connection->isReportAppExitStatusNeeded())
-    {
+    if (m_connection->isReportAppExitStatusNeeded()) {
         return m_connection->peerPid();
     }
-    else
-    {
-        return 0;
-    }
+
+    return 0;
 }
 
 void Booster::setBoosterLauncherSocket(int newBoosterLauncherSocket)
@@ -691,7 +666,7 @@ std::string Booster::getFinalName(const std::string &name)
         // value.
         // If the application is specified without /usr/bin,
         // then adding -- before the application name allows this to work.
-        const char **ptr = m_appData->argv()+1;
+        const char **ptr = m_appData->argv() + 1;
         for (int i = 1; i < m_appData->argc(); i++, ptr++) {
             if (strcmp(*ptr, "--") == 0) {
                 if (i+1 < m_appData->argc()) {
@@ -702,6 +677,6 @@ std::string Booster::getFinalName(const std::string &name)
             }
         }
     }
+
     return name;
 }
-
