@@ -85,14 +85,14 @@ extern "C"
      * \brief Try to acquire a lock file.
      *
      * Tries to acquire a lock currently at
-     * $XDG_RUNTIME_DIR/single-instance-locks/[binaryName]/instance.lock
+     * $XDG_RUNTIME_DIR/single-instance-locks/[appName]/instance.lock
      *
-     * \param binaryName Full path to the binary.
+     * \param appName Identifier for the app, usually full path to the binary.
      * \return true if succeeded, false on failure.
      */
-    DECL_EXPORT bool lock(const char * binaryName)
+    DECL_EXPORT bool lock(const char * appName)
     {
-        std::string path(LOCK_PATH_BASE + binaryName);
+        std::string path(LOCK_PATH_BASE + appName);
         if (!mkpath(path)) {
             report(report_error, "Couldn't create dir %s\n", path.c_str());
 
@@ -134,6 +134,7 @@ extern "C"
     //! Activate existing application 
     DECL_EXPORT bool activateExistingInstance(const char * binaryName)
     {
+        // TODO: we don't yet support activating by app name as in locking
         DBusError error;
 
         dbus_error_init(&error);

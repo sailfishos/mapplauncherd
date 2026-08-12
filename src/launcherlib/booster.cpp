@@ -62,6 +62,72 @@ static std::string basename(const std::string &str)
     return str.substr(str.find_last_of("/") + 1);
 }
 
+struct AppIdentifiers
+{
+    std::string executable;
+    std::string appName;
+};
+
+static std::string getFinalName(const std::string &name, int argc, const char *argv[])
+{
+    if (name == SAILJAIL_PATH) {
+        // This doesn't implement sailjail's parsing logic but instead
+        // has some assumptions about the arguments:
+        // - If there is --, then the application is
+        //   the next argument after that.
+        // - If there is an argument that begins with /usr/bin/,
+        //   then the application is that argument.
+        // The one that is found first is used as the application name.
+        // Otherwise it can not be deduced and the original value is used.
+        //
+        // If you want to give a value to sailjail that begins with /usr/bin/,
+        // use the long format with '=' character between the argument and the
+        // value.
+        // If the application is specified without /usr/bin,
+        // then adding -- before the application name allows this to work.
+        const char **ptr = argv + 1;
+        for (int i = 1; i < argc; i++, ptr++) {
+            if (strcmp(*ptr, "--") == 0) {
+                if (i+1 < argc) {
+                    ptr++;
+                    return std::string(*ptr);
+                }
+            } else if (strncmp(*ptr, "/usr/bin/", 9) == 0) {
+                return std::string(*ptr);
+            }
+        }
+    }
+
+    return name;
+}
+
+static AppIdentifiers getAppIdentifiers(const std::string &name, int argc, const char *argv[])
+{
+    AppIdentifiers ids;
+    ids.executable = getFinalName(name, argc, argv);
+    ids.appName = ids.executable;
+
+    if (ids.executable == "/usr/bin/sailfish-qml" || ids.executable == "sailfish-qml") {
+        // this is a launcher application for qml apps with content specified to known locations
+        // based on the app name which passed as first parameter.
+        // need to dig that out so that we don't consider single instance for the launcher itself
+        const char **ptr = argv + 1;
+
+        for (int i = 1; i < argc; i++, ptr++) {
+            if (strcmp(*ptr, "sailfish-qml") == 0
+                || strcmp(*ptr, "/usr/bin/sailfish-qml") == 0) {
+                if (i+1 < argc) {
+                    ptr++;
+                    ids.appName = std::string(*ptr);
+                    break;
+                }
+            }
+        }
+    }
+
+    return ids;
+}
+
 Booster::Booster()
     : m_appData(new AppData)
     , m_connection(nullptr)
@@ -111,11 +177,14 @@ void Booster::initialize(int initialArgc, char **initialArgv, int newBoosterLaun
             SingleInstancePluginEntry * pluginEntry = singleInstance->pluginEntry();
 
             if (pluginEntry) {
-                std::string lockedAppName = getFinalName(m_appData->appName());
+                AppIdentifiers identifiers = getAppIdentifiers(m_appData->appName(), m_appData->argc(), m_appData->argv());
+                std::string lockedAppName = identifiers.appName;
 
                 if (!pluginEntry->lockFunc(lockedAppName.c_str())) {
-                    // Try to activate the window of the existing instance
-                    if (!pluginEntry->activateExistingInstanceFunc(lockedAppName.c_str())) {
+                    // Try to activate the window of the existing instance.
+                    // The current implementation doesn't support app name so using the executable
+                    // and hoping for the best.
+                    if (!pluginEntry->activateExistingInstanceFunc(identifiers.executable.c_str())) {
                         Logger::logWarning("Booster: Can't activate existing instance of the application!");
                         m_connection->sendExitValue(EXIT_FAILURE);
                     } else {
@@ -434,7 +503,8 @@ void Booster::setEnvironmentBeforeLaunch()
     if (!errno && cur_prio < m_appData->priority())
         setpriority(PRIO_PROCESS, 0, m_appData->priority());
 
-    std::string fileName = getFinalName(m_appData->fileName());
+    std::string fileName = getFinalName(m_appData->fileName(), m_appData->argc(), m_appData->argv());
+    // TODO: should probably set up cgroups based on app name in case of sailfish-qml etc
     setCgroup(fileName);
 
     if (!m_appData->isPrivileged()) {
@@ -647,36 +717,4 @@ void Booster::resetOomAdj()
     } else {
         Logger::logError("Couldn't open '%s' for writing", PROC_OOM_ADJ_FILE);
     }
-}
-
-std::string Booster::getFinalName(const std::string &name)
-{
-    if (name == SAILJAIL_PATH) {
-        // This doesn't implement sailjail's parsing logic but instead
-        // has some assumptions about the arguments:
-        // - If there is --, then the application is
-        //   the next argument after that.
-        // - If there is an argument that begins with /usr/bin/,
-        //   then the application is that argument.
-        // The one that is found first is used as the application name.
-        // Otherwise it can not be deduced and the original value is used.
-        //
-        // If you want to give a value to sailjail that begins with /usr/bin/,
-        // use the long format with '=' character between the argument and the
-        // value.
-        // If the application is specified without /usr/bin,
-        // then adding -- before the application name allows this to work.
-        const char **ptr = m_appData->argv() + 1;
-        for (int i = 1; i < m_appData->argc(); i++, ptr++) {
-            if (strcmp(*ptr, "--") == 0) {
-                if (i+1 < m_appData->argc()) {
-                    return std::string(*(++ptr));
-                }
-            } else if (strncmp(*ptr, "/usr/bin/", 9) == 0) {
-                return std::string(*ptr);
-            }
-        }
-    }
-
-    return name;
 }
