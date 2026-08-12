@@ -150,7 +150,7 @@ extern "C"
         msg = dbus_message_new_method_call("org.nemomobile.lipstick",
                                            "/WindowModel",
                                            "local.Lipstick.WindowModel",
-                                           "launchProcess");
+                                           "raiseProcessWindow");
         if (!msg) {
             report(report_error, "Can't allocate bus message");
             goto err;
