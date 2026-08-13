@@ -621,13 +621,11 @@ void Daemon::loadSingleInstancePlugin()
     void * handle = dlopen(SINGLE_INSTANCE_PATH, RTLD_NOW);
     if (!handle) {
         Logger::logWarning("Daemon: dlopening single-instance failed: %s", dlerror());
+    } else if (m_singleInstance->validateAndRegisterPlugin(handle)) {
+        Logger::logDebug("Daemon: single-instance plugin loaded.'");
     } else {
-        if (m_singleInstance->validateAndRegisterPlugin(handle)) {
-            Logger::logDebug("Daemon: single-instance plugin loaded.'");
-        } else {
-            Logger::logWarning("Daemon: Invalid single-instance plugin: '%s'",
-                               SINGLE_INSTANCE_PATH);
-        }
+        Logger::logWarning("Daemon: Invalid single-instance plugin: '%s'",
+                           SINGLE_INSTANCE_PATH);
     }
 }
 

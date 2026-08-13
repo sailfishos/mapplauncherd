@@ -176,7 +176,6 @@ err:
     }
 }
 
-//! The main function
 int main(int argc, char **argv)
 {
     if (argc < 2) {
@@ -185,21 +184,19 @@ int main(int argc, char **argv)
     } else if (std::string(argv[1]) == "--help" || std::string(argv[1]) == "-h") {
         printHelp();
         return EXIT_SUCCESS;
-    } else {
-        if (!lock(argv[1])) {
-            bool success = activateExistingInstance(argv[1]);
-            if (!success) {
-                return EXIT_FAILURE;
-            }
-        } else {
-            if (execve(argv[1], argv + 1, environ) == -1) {
-                report(report_error, "Failed to exec binary '%s' : %s\n", argv[1], strerror(errno));
-                unlock();
-                
-                return EXIT_FAILURE;
-            }
-        }
     }
-    
+
+    if (!lock(argv[1])) {
+        bool success = activateExistingInstance(argv[1]);
+        if (!success) {
+            return EXIT_FAILURE;
+        }
+    } else if (execve(argv[1], argv + 1, environ) == -1) {
+        report(report_error, "Failed to exec binary '%s' : %s\n", argv[1], strerror(errno));
+        unlock();
+
+        return EXIT_FAILURE;
+    }
+
     return EXIT_SUCCESS;
 }

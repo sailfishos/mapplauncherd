@@ -199,11 +199,10 @@ uint32_t Connection::receiveMagic()
     // Receive the magic.
     recvMsg(&magic);
 
-    if ((magic & INVOKER_MSG_MASK) == INVOKER_MSG_MAGIC) {
-        if (!((magic & INVOKER_MSG_MAGIC_VERSION_MASK) == INVOKER_MSG_MAGIC_VERSION)) {
-            Logger::logError("Connection: receiving bad magic version (%08x)\n", magic);
-            return -1;
-        }
+    if ((magic & INVOKER_MSG_MASK) == INVOKER_MSG_MAGIC
+        && (magic & INVOKER_MSG_MAGIC_VERSION_MASK) != INVOKER_MSG_MAGIC_VERSION) {
+        Logger::logError("Connection: receiving bad magic version (%08x)\n", magic);
+        return -1;
     }
     m_sendPid = magic & INVOKER_MSG_MAGIC_OPTION_WAIT;
 
