@@ -181,4 +181,3 @@ void die(int status, const char *msg, ...)
 
     exit(status);
 }
-

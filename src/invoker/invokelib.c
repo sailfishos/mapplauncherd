@@ -51,24 +51,19 @@ bool invoke_recv_msg(int fd, uint32_t *msg)
     int len = sizeof(readBuf);
     ssize_t numRead = read(fd, &readBuf, len);
 
-    if (numRead == -1)
-    {
+    if (numRead == -1) {
         debug("%s: Error reading message: %m\n", __FUNCTION__);
         *msg = 0;
         return false;
-    }
-    else if (numRead < len)
-    {
+    } else if (numRead < len) {
         debug("%s: Error: unexpected end-of-file \n", __FUNCTION__);
         *msg = 0;
         return false;
     }
-    else
-    {
-        debug("%s: %08x\n", __FUNCTION__, readBuf);
-        *msg = readBuf;
-        return true;
-    }
+
+    debug("%s: %08x\n", __FUNCTION__, readBuf);
+    *msg = readBuf;
+    return true;
 }
 
 void invoke_send_str(int fd, const char *str)

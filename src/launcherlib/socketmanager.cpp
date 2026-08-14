@@ -119,8 +119,7 @@ void SocketManager::initSocket(const string & socketId)
 {
     // Initialize a socket at socketId if one already doesn't
     // exist for that id / path.
-    if (m_socketHash.find(socketId) == m_socketHash.end())
-    {
+    if (m_socketHash.find(socketId) == m_socketHash.end()) {
         string socketPath = prepareSocket(socketId);
         if (socketPath.empty()) {
             string msg;
@@ -151,8 +150,7 @@ void SocketManager::initSocket(const string & socketId)
             throw std::runtime_error("SocketManager: Failed to open socket\n");
 
         // Bind the socket
-        if (bind(socketFd, (struct sockaddr*) &sun, sizeof(sun)) < 0)
-        {
+        if (bind(socketFd, (struct sockaddr*) &sun, sizeof(sun)) < 0) {
             string msg;
             msg += "SocketManager: Failed to bind socket to ";
             msg += socketPath;
@@ -160,8 +158,7 @@ void SocketManager::initSocket(const string & socketId)
         }
 
         // Listen to the socket
-        if (listen(socketFd, 10) < 0)
-        {
+        if (listen(socketFd, 10) < 0) {
             string msg;
             msg += "SocketManager: Failed to listen to socket ";
             msg += socketPath;
@@ -180,8 +177,7 @@ void SocketManager::closeSocket(const string & socketId)
 {
     SocketHash::iterator it(m_socketHash.find(socketId));
 
-    if (it != m_socketHash.end())
-    {
+    if (it != m_socketHash.end()) {
         ::close(it->second);
         m_socketHash.erase(it);
     }
@@ -190,10 +186,8 @@ void SocketManager::closeSocket(const string & socketId)
 void SocketManager::closeAllSockets()
 {
     SocketHash::iterator it;
-    for (it = m_socketHash.begin(); it != m_socketHash.end(); ++it)
-    {
-        if (it->second > 0)
-        {
+    for (it = m_socketHash.begin(); it != m_socketHash.end(); ++it) {
+        if (it->second > 0) {
             ::close(it->second);
         }
     }
@@ -226,4 +220,3 @@ string SocketManager::socketRootPath() const
 {
     return m_socketRootPath + '/';
 }
-

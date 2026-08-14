@@ -51,7 +51,6 @@ class SingleInstance;
 class DECL_EXPORT Booster
 {
 public:
-
     //! Constructor
     Booster();
 
@@ -130,7 +129,6 @@ public:
     bool bootMode() const;
 
 protected:
-
     /*!
      * Set process environment (UID, GID..) before launch.
      * Re-implement if needed. This is automatically called by
@@ -181,7 +179,6 @@ protected:
     AppData* m_appData;
 
 private:
-
     //! Disable copy-constructor
     Booster(const Booster & r);
 
@@ -194,9 +191,6 @@ private:
 
     //! Helper method: load the library and find out address for "main".
     void* loadMain();
-
-    //! Helper method: returns application name for to use for locking etc.
-    std::string getFinalName(const std::string &name);
 
     //! Socket connection to invoker
     Connection* m_connection;

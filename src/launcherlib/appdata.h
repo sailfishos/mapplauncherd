@@ -38,7 +38,6 @@ typedef int (*entry_t)(int, char **);
 class DECL_EXPORT AppData
 {
 public:
-
     //! Constructor
     AppData();
 
@@ -130,9 +129,9 @@ public:
     string privileges() const;
 
 private:
-
     AppData(const AppData & r);
     AppData & operator= (const AppData & r);
+
     string getPrivileges(const char *path);
     void checkPrivileges();
 
